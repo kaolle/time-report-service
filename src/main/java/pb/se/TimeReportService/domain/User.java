@@ -42,4 +42,8 @@ public class User {
     public List<Customer> getCustomers() {
         return customers;
     }
+
+    public String getPassword() {
+        return password;
+    }
 }

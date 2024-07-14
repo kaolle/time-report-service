@@ -51,12 +51,20 @@ public class WorkLog {
         return hoursWorked;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public WorkLog assignUser(User user) {
+        return new WorkLog(this.id, user, this.date, this.task, this.hoursWorked);
+    }
+
     public void setDate(LocalDate date) {
         this.date = date;
     }
 
     public void setTask(Task task) {
-
+        this.task = task;
     }
 
     public void setHoursWorked(int hoursWorked) {

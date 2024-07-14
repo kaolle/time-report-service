@@ -3,10 +3,14 @@ package pb.se.TimeReportService.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pb.se.TimeReportService.annotation.CurrentUser;
+import pb.se.TimeReportService.controller.dto.GetTaskResponse;
+import pb.se.TimeReportService.controller.dto.TaskRequest;
+import pb.se.TimeReportService.controller.dto.CreateTaskResponse;
 import pb.se.TimeReportService.domain.Task;
+import pb.se.TimeReportService.domain.User;
 import pb.se.TimeReportService.service.TaskService;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -16,36 +20,27 @@ public class TaskController {
     @Autowired
     private TaskService taskService;
 
-    @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getAllTasks();
-    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable UUID id) {
-        return taskService.getTaskById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<GetTaskResponse> getTaskById(@CurrentUser User user, @PathVariable UUID id) {
+        Task task = taskService.getTaskById(user, id);
+        return ResponseEntity.ok(new GetTaskResponse(task));
     }
 
     @PostMapping
-    public Task createTask(@RequestBody Task task) {
-        return taskService.createTask(task);
+    public CreateTaskResponse createTask(@CurrentUser User user, @RequestBody TaskRequest taskRequest) {
+        return new CreateTaskResponse(taskService.createTask(user, taskRequest));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable UUID id, @RequestBody Task task) {
-        return taskService.updateTask(id, task)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Task> updateTask(@CurrentUser User user, @PathVariable UUID id, @RequestBody Task task) {
+        taskService.updateTask(user, id, task);
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable UUID id) {
-        if (taskService.deleteTask(id)) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<Void> deleteTask(@CurrentUser User user, @PathVariable UUID id) {
+        taskService.deleteTask(user, id);
+        return ResponseEntity.noContent().build();
     }
 }

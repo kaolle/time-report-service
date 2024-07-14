@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.UUID;
-
+@SuppressWarnings("unused")
 @Document(collection = "tasks")
 public class Task {
 
@@ -25,8 +25,9 @@ public class Task {
 
     }
 
-    public Task(UUID id, String title, String customerCode, Customer customer) {
-        this.id = id;
+    public Task(User user, String title, String customerCode, Customer customer) {
+        this.user = user;
+        this.id = UUID.randomUUID();
         this.title = title;
         this.customerCode = customerCode;
         this.customer = customer;
@@ -54,5 +55,8 @@ public class Task {
 
     public void setCustomerCode(String customerCode) {
         this.customerCode = customerCode;
+    }
+    public User getUser() {
+        return user;
     }
 }
