@@ -1,0 +1,36 @@
+{
+  "customers": [
+    {
+      "id": "b8c7514f-33d9-4fd7-bc3b-fa379a074c02",
+      "name": "Customer1",
+      "tasks": [
+        {
+          "id": "ecf2213a-bad4-416f-ade7-caf88fbd7c24",
+          "title": "Task1",
+          "customerCode": "Code1"
+        },
+        {
+          "id": "6951dff6-dc43-4b23-ae30-acee872864e4",
+          "title": "Task2",
+          "customerCode": "Code2"
+        }
+      ]
+    },
+    {
+      "id": "4e43f095-c0bf-49b8-a244-ab374879aae0",
+      "name": "Customer2",
+      "tasks": [
+        {
+          "id": "4150b47b-bd1d-48f5-991b-77d782ba6e56",
+          "title": "Task3",
+          "customerCode": "Code3"
+        },
+        {
+          "id": "c318098d-8237-49ca-bfa3-71e01d8e69c2",
+          "title": "Task4",
+          "customerCode": "Code4"
+        }
+      ]
+    }
+  ]
+}

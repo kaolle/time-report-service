@@ -38,7 +38,8 @@ public class CustomerService {
     public void deleteCustomer(UUID id, User user) {
         validateUserIsTheOwner(user, id);
         Customer customer = customerRepository.findById(id).orElseThrow(CustomerNotFoundException::new);
-
+        user.removeCustomer(customer);
+        userService.update(user);
         customerRepository.delete(customer);
     }
 

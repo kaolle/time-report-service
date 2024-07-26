@@ -38,6 +38,7 @@ public class TaskService {
     }
 
     public Optional<Task> updateTask(User user, UUID id, Task task) {
+        validateUser(user, task);
         return taskRepository.findById(id)
                 .map(existingTask -> {
                     existingTask.setTitle(task.getTitle());
@@ -46,18 +47,16 @@ public class TaskService {
                 });
     }
 
-    public boolean deleteTask(User user, UUID id) {
+    public void deleteTask(User user, UUID id) {
         validateUser(user, taskRepository.findById(id).orElseThrow(TaskNotFoundException::new));
-        return taskRepository.findById(id)
-                .map(task -> {
-                    taskRepository.delete(task);
-                    return true;
-                })
-                .orElse(false);
+        Task task = taskRepository.findById(id).orElseThrow(TaskNotFoundException::new);
+        task.getCustomer().removeTask(task);
+        customerService.updateCustomer(user, task.getCustomer().getId(), task.getCustomer());
+        taskRepository.delete(task);
     }
 
     private static void validateUser(User user, Task task) {
-        if (!task.getUser().equals(user)) {
+        if (!task.getUser().getUsername().equals(user.getUsername())) {
             throw new ForbiddenException();
         }
     }

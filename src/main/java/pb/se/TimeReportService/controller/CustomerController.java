@@ -22,12 +22,6 @@ public class CustomerController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Customer> getCustomerById(@CurrentUser User user, @PathVariable UUID id) {
-        Customer customer = customerService.getCustomerById(user, id);
-        return ResponseEntity.ok(customer);
-    }
-
     @PostMapping
     public ResponseEntity<Customer> addCustomer(@CurrentUser User user, @RequestBody Customer customer) {
         Customer addedCustomer = customerService.addCustomer(user, customer);

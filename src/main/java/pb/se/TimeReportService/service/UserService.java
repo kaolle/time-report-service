@@ -2,6 +2,7 @@ package pb.se.TimeReportService.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pb.se.TimeReportService.annotation.UserNotFoundException;
 import pb.se.TimeReportService.domain.User;
 import pb.se.TimeReportService.port.persistence.UserRepository;
 
@@ -18,8 +19,12 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public Optional<User> getUserByUsername(String username) {
-        return userRepository.findById(username);
+    public User getUser(String username) {
+        return userRepository.findById(username).orElseThrow(UserNotFoundException::new);
+    }
+
+    public User getUser(User user) {
+        return userRepository.findById(user.getUsername()).orElseThrow(UserNotFoundException::new);
     }
 
     public User update(User user) {

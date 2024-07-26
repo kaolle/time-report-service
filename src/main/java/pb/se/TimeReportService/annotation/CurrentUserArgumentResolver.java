@@ -25,8 +25,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
-        Optional<User> user = userService.getUserByUsername(webRequest.getUserPrincipal().getName());
-        return user.orElseThrow(UserNotFoundException::new);
+        return userService.getUser(webRequest.getUserPrincipal().getName());
     }
 
 }

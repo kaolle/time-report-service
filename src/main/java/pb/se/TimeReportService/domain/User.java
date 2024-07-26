@@ -1,5 +1,7 @@
 package pb.se.TimeReportService.domain;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -39,11 +41,31 @@ public class User {
         customers.add(customer);
     }
 
+    public void removeCustomer(Customer customer) {
+        customers.remove(customer);
+    }
+
     public List<Customer> getCustomers() {
         return customers;
     }
 
     public String getPassword() {
         return password;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        User user = (User) o;
+
+        return new EqualsBuilder().append(username, user.username).append(password, user.password).append(customers, user.customers).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(username).append(password).append(customers).toHashCode();
     }
 }

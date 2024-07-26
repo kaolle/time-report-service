@@ -52,4 +52,8 @@ public class Customer {
     public void setTasks(List<Task> tasks) {
         this.tasks = tasks;
     }
+
+    public void removeTask(Task task) {
+        tasks.remove(task);
+    }
 }
