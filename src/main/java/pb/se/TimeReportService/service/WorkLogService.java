@@ -23,17 +23,16 @@ public class WorkLogService {
         return workLogRepository.findById(id);
     }
 
-    public WorkLog createWorkLog(User user, WorkLog workLog) {
-        return workLogRepository.save(workLog.assignUser(user));
+    private static void validateUserIsTheOwner(User user, UUID customerId) {
+        if (user.getCustomers().stream().noneMatch(c-> c.getId().equals(customerId))) {
+            throw new ForbiddenException();
+        }
     }
 
-    public void updateWorkLog(User user, UUID id, WorkLog updatedWorkLog) {
-        WorkLog existingWorkLog = workLogRepository.findById(id).orElseThrow(WorkLogNotFoundException::new);
-        validateUser(user, existingWorkLog);
-        existingWorkLog.setDate(updatedWorkLog.getDate());
-        existingWorkLog.setTask(updatedWorkLog.getTask());
-        existingWorkLog.setHoursWorked(updatedWorkLog.getHoursWorked());
-        workLogRepository.save(existingWorkLog);
+    private static void validateUserIsTheOwnerOfTask(User user, UUID taskId) {
+        if (user.getCustomers().stream().noneMatch(c-> c.getTasks().stream().anyMatch(t -> t.getId().equals(taskId)))) {
+            throw new ForbiddenException();
+        }
     }
 
     public void deleteWorkLog(User user, UUID id) {
@@ -50,6 +49,20 @@ public class WorkLogService {
         if (!existingWorkLog.getUser().equals(user)) {
             throw new ForbiddenException();
         }
+    }
+
+    public WorkLog createWorkLog(User user, WorkLog workLog) {
+        //TODO
+        return workLogRepository.save(workLog.assignUser(user));
+    }
+
+    public void updateWorkLog(User user, UUID id, WorkLog updatedWorkLog) {
+        WorkLog existingWorkLog = workLogRepository.findById(id).orElseThrow(WorkLogNotFoundException::new);
+        validateUser(user, existingWorkLog);
+        existingWorkLog.setDate(updatedWorkLog.getDate());
+        existingWorkLog.setTaskId(updatedWorkLog.getTaskId());
+        existingWorkLog.setHoursWorked(updatedWorkLog.getHoursWorked());
+        workLogRepository.save(existingWorkLog);
     }
 
 }

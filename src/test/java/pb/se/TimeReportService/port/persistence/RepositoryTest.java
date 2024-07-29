@@ -29,29 +29,12 @@ class RepositoryTest {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private CustomerRepository customerRepository;
-    @Autowired
-    private TaskRepository taskRepository;
-    @Autowired
     private WorkLogRepository workLogRepository;
 
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
-        customerRepository.deleteAll();
-        taskRepository.deleteAll();
         workLogRepository.deleteAll();
-    }
-
-    @Test
-    void aCustomerCanBeStoredAndFetched() {
-        String name = "Test";
-        Customer customer1 = new Customer(name);
-        customerRepository.save(customer1);
-
-        Customer customer = customerRepository.findById(customer1.getId()).get();
-
-        assertEquals(name, customer.getName());
     }
 
     @Test
@@ -61,9 +44,7 @@ class RepositoryTest {
         userRepository.save(user);
 
         // Create and save a customer
-        UUID customerId = UUID.randomUUID();
         Customer customer = new Customer("Customer1");
-        customerRepository.save(customer);
 
         // Fetch the user and verify the associated customer
         User fetchedUser = userRepository.findById(user.getUsername()).get();
@@ -76,38 +57,45 @@ class RepositoryTest {
 
     @Test
     void aTaskCanBeAddedToCustomer() {
+        User user = new User("user1");
         String name = "Test";
-        Customer customer = new Customer(name);
-        customerRepository.save(customer);
+        userRepository.save(user);
 
-        Customer customerFromDb = customerRepository.findById(customer.getId()).get();
-        assertEquals(0, customerFromDb.getTasks().size());
+        // Create and save a customer
+        Customer customer = new Customer("Customer1");
+
+        // Fetch the user and verify the associated customer
+        User fetchedUser = userRepository.findById(user.getUsername()).get();
+        fetchedUser.addCustomer(customer);
+        userRepository.save(fetchedUser);
+
+        // Create and save a task
         String taskTitle = "Task";
-        Task task = new Task(new User("baba"), taskTitle, "CustomerCode", customer);
-        taskRepository.save(task);
-        customerFromDb.addTask(task);
-        customerRepository.save(customerFromDb);
+        Task task = new Task( taskTitle, "CustomerCode");
+        fetchedUser = userRepository.findById(user.getUsername()).get();
+        assertEquals(1, fetchedUser.getCustomers().size());
+        fetchedUser.getCustomers().get(0).addTask(task);
+        userRepository.save(fetchedUser);
 
-        Customer customerFromDb2 = customerRepository.findById(customer.getId()).get();
-        assertEquals(1, customerFromDb2.getTasks().size());
-        assertEquals(taskTitle, customerFromDb2.getTasks().get(0).getTitle());
+        //verify that the task exist in the user and the customer
+        User finalUserToVerify = userRepository.findById(user.getUsername()).get();
+        assertEquals(1, finalUserToVerify.getCustomers().get(0).getTasks().size());
+        assertEquals(taskTitle, finalUserToVerify.getCustomers().get(0).getTasks().get(0).getTitle());
     }
 
     @Test
     void aTaskCanBeAddedToWorkLog() {
         String name = "Test";
         Customer customer = new Customer(name);
-        customerRepository.save(customer);
         String taskTitle = "Task";
-        Task task = new Task(new User("baba"), taskTitle, "CustomerCode", customer);
-        taskRepository.save(task);
+        Task task = new Task(taskTitle, "CustomerCode");
 
-        WorkLog workLog = new WorkLog(UUID.randomUUID(), new User("baba"), LocalDate.now(), task, 8);
+        WorkLog workLog = new WorkLog(UUID.randomUUID(), new User("baba"), LocalDate.now(), task.getId(), 8);
         workLogRepository.save(workLog);
 
         WorkLog workLogFromDb = workLogRepository.findById(workLog.getId()).get();
 
-        assertEquals(taskTitle, workLogFromDb.getTask().getTitle());
+        assertEquals(task.getId(), workLogFromDb.getTaskId());
     }
 
     @Test
@@ -117,8 +105,8 @@ class RepositoryTest {
         LocalDate startDate = LocalDate.now().minusMonths(1);
         LocalDate endDate = LocalDate.now();
 
-        WorkLog workLog1 = new WorkLog(UUID.randomUUID(), user, startDate, new Task(user, "Task1", "CustomerCode1", new Customer()), 8);
-        WorkLog workLog2 = new WorkLog(UUID.randomUUID(), user, endDate, new Task(user, "Task2", "CustomerCode2", new Customer()), 8);
+        WorkLog workLog1 = new WorkLog(UUID.randomUUID(), user, startDate, UUID.randomUUID(), 8);
+        WorkLog workLog2 = new WorkLog(UUID.randomUUID(), user, endDate, UUID.randomUUID(), 8);
         workLogRepository.save(workLog1);
         workLogRepository.save(workLog2);
 
@@ -135,8 +123,8 @@ class RepositoryTest {
         LocalDate startDate = LocalDate.now().minusMonths(1).withDayOfMonth(1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-        WorkLog workLog1 = new WorkLog(UUID.randomUUID(), user1, startDate.plusDays(5), new Task(user1, "Task1", "CustomerCode1", new Customer()), 8);
-        WorkLog workLog2 = new WorkLog(UUID.randomUUID(), user1, startDate.plusDays(10), new Task(user1, "Task2", "CustomerCode2", new Customer()), 8);
+        WorkLog workLog1 = new WorkLog(UUID.randomUUID(), user1, startDate.plusDays(5), UUID.randomUUID(), 8);
+        WorkLog workLog2 = new WorkLog(UUID.randomUUID(), user1, startDate.plusDays(10), UUID.randomUUID(), 8);
         workLogRepository.save(workLog1);
         workLogRepository.save(workLog2);
 

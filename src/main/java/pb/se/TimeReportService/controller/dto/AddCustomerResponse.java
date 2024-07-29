@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class CustomerResponse {
+public class AddCustomerResponse {
     @JsonProperty
     private final UUID id;
     @JsonProperty
     private final String name;
     @JsonProperty
-    private final List<TaskResponse> tasks;
-    public CustomerResponse(Customer customer) {
+    private final List<AddTaskResponse> tasks;
+    public AddCustomerResponse(Customer customer) {
         this.id = customer.getId();
         this.name = customer.getName();
-        this.tasks = customer.getTasks().stream().map(TaskResponse::new).collect(Collectors.toList());
+        this.tasks = customer.getTasks().stream().map(AddTaskResponse::new).collect(Collectors.toList());
     }
 }

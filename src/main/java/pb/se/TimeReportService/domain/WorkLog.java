@@ -21,17 +21,16 @@ public class WorkLog {
 
     private LocalDate date;
 
-    @DBRef
-    private Task task;
+    private UUID taskId;
 
     private int hoursWorked;
 
 
-    public WorkLog(UUID id, User user, LocalDate date, Task task, int hoursWorked) {
+    public WorkLog(UUID id, User user, LocalDate date, UUID taskId, int hoursWorked) {
         this.id = id;
         this.user = user;
         this.date = date;
-        this.task = task;
+        this.taskId = taskId;
         this.hoursWorked = hoursWorked;
     }
 
@@ -43,8 +42,8 @@ public class WorkLog {
         return date;
     }
 
-    public Task getTask() {
-        return task;
+    public UUID getTaskId() {
+        return taskId;
     }
 
     public int getHoursWorked() {
@@ -55,16 +54,16 @@ public class WorkLog {
         return user;
     }
 
-    public WorkLog assignUser(User user) {
-        return new WorkLog(this.id, user, this.date, this.task, this.hoursWorked);
+    public void setTaskId(UUID taskId) {
+        this.taskId = taskId;
     }
 
     public void setDate(LocalDate date) {
         this.date = date;
     }
 
-    public void setTask(Task task) {
-        this.task = task;
+    public WorkLog assignUser(User user) {
+        return new WorkLog(this.id, user, this.date, this.taskId, this.hoursWorked);
     }
 
     public void setHoursWorked(int hoursWorked) {

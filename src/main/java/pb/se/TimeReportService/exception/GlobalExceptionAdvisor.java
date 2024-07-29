@@ -28,5 +28,9 @@ public class GlobalExceptionAdvisor extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> toResponse(ForbiddenException e, WebRequest request) {
         return new ResponseEntity<>(HttpStatus.FORBIDDEN);
     }
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<String> handleTaskNotFoundException(TaskNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
 
 }

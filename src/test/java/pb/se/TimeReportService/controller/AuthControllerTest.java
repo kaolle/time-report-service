@@ -3,6 +3,7 @@ package pb.se.TimeReportService.controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.hamcrest.Matchers;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,20 +23,23 @@ import pb.se.TimeReportService.port.persistence.WhiteListedUserRepository;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-public class UserControllerTest {
+public class AuthControllerTest {
 
 
     public static final String USERNAME = "baba";
+    public static final String THE_PASSWORD = "säkert";
     @Autowired
     UserRepository userRepository;
     @Autowired
@@ -51,64 +55,98 @@ public class UserControllerTest {
 
         whiteListedUserRepository.save(new WhiteListedUser(USERNAME));
 
-        accessToken = signUp(USERNAME, "säkert");
+        signUp(USERNAME, THE_PASSWORD);
     }
 
 
     @Test
-    public void canAddCustomersAndTasksAndFinallyGetAllCustomersAndTasks() throws Exception {
+    public void userThatAreSignOnCanSignIn() throws Exception {
+        // signin
+        ResponseEntity<String> response = signIn();
 
-        UUID customerId1 = addCustomerToUser("Customer1");
-        addTaskToCustomer(customerId1, "Task1", "Code1");
-        addTaskToCustomer(customerId1, "Task2", "Code2");
-        UUID customerId2 = addCustomerToUser("Customer2");
-        addTaskToCustomer(customerId2, "Task3", "Code3");
-        addTaskToCustomer(customerId2, "Task4", "Code4");
+        JsonObject responseBody= new Gson().fromJson(response.getBody(), JsonObject.class);
+        assertTrue(responseBody.has("accessToken"));
+    }
 
-       //get
+    @Test
+    public void userThatAreSignCanAlsoSelfSignOff() throws Exception {
+        // signin
+        ResponseEntity<String> response = signIn();
+
+        JsonObject responseBody= new Gson().fromJson(response.getBody(), JsonObject.class);
+        String accessToken = responseBody.get("accessToken").getAsString();
+
+        //Sign off
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response2 = restTemplate.exchange("/auth/signdown", HttpMethod.DELETE, entity, String.class);
+        assertThat(response2.getStatusCode(), Matchers.is(NO_CONTENT));
+
+        //verify that the user is deleted
+        Optional<User> userRepositoryById = userRepository.findById(USERNAME);
+        assertTrue(userRepositoryById.isEmpty());
+    }
+
+    @Test
+    public void userThatAreSignOnCanNotSignInWithWrongPassword() throws Exception {
+        // signin
+        JsonObject json = new JsonObject();
+        json.addProperty("username", USERNAME);
+        json.addProperty("password", "wrong");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(accessToken);
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+        HttpEntity<String> entity = new HttpEntity<>(json.toString(), headers);
 
-        ResponseEntity<String> response = restTemplate.exchange("/time-report/users", HttpMethod.GET, entity, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity( "/auth/signin", entity, String.class);
+        assertThat(response.getStatusCode(), Matchers.is(UNAUTHORIZED));
+    }
+
+    @Test
+    public void aUserCannotSignUpIfNotWhiteListedItReturnForbidden() {
+        whiteListedUserRepository.deleteAll();
+        // signup
+        JsonObject json = new JsonObject();
+        json.addProperty("username", "notWhiteListed");
+        json.addProperty("password", "password");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(json.toString(), headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity( "/auth/signup", entity, String.class);
+
+        assertThat(response.getStatusCode(), Matchers.is(FORBIDDEN));
+    }
+
+    @Test
+    public void aUserCannotSignUpIfAlreadyExistsNothingIsLeadedInResponse() {
+        // signup
+        JsonObject json = new JsonObject();
+        json.addProperty("username", USERNAME);
+        json.addProperty("password", "password");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(json.toString(), headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity( "/auth/signup", entity, String.class);
+
+        assertThat(response.getStatusCode(), Matchers.is(CONFLICT));
+        assertNull(response.getBody());
+    }
+
+    @NotNull
+    private ResponseEntity<String> signIn() {
+        JsonObject json = new JsonObject();
+        json.addProperty("username", USERNAME);
+        json.addProperty("password", THE_PASSWORD);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(json.toString(), headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity( "/auth/signin", entity, String.class);
         assertThat(response.getStatusCode(), Matchers.is(OK));
-        JsonObject responseBody = new Gson().fromJson(response.getBody(), JsonObject.class);
-        assertThat(responseBody.get("customers").getAsJsonArray().size(), Matchers.is(2));
-        assertThat(responseBody.get("customers").getAsJsonArray().get(0).getAsJsonObject().get("tasks").getAsJsonArray().size(), Matchers.is(2));
-        assertThat(responseBody.get("customers").getAsJsonArray().get(1).getAsJsonObject().get("tasks").getAsJsonArray().size(), Matchers.is(2));
-    }
-
-    @Test
-    public void canDeleteTaskFromCustomer() throws Exception {
-
-        UUID customerId = addCustomerToUser("Customer1");
-        String taskTitle = "Task1";
-        String customerCode = "Code1";
-        UUID taskId = addTaskToCustomer(customerId, taskTitle, customerCode);
-        // get task id from response
-
-        //delete task from customer's task list
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(accessToken);
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
-        ResponseEntity<String> response = restTemplate.exchange("/time-report/users/customers/tasks/" + taskId.toString(), HttpMethod.DELETE, entity, String.class);
-        assertThat(response.getStatusCode(), Matchers.is(NO_CONTENT));
-
-        //check if task is deleted
-        Optional<User> user = userRepository.findById(USERNAME);
-        assertTrue(user.isPresent());
-        assertThat(user.get().getCustomers().get(0).getTasks(), hasSize(0));
-    }
-    @Test
-    public void deleteTaskThatDoesNotExistsGivesNotFound() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(accessToken);
-        HttpEntity<String> entity = new HttpEntity<>(null, headers);
-        ResponseEntity<String> response = restTemplate.exchange("/time-report/users/customers/tasks/" + UUID.randomUUID().toString(), HttpMethod.DELETE, entity, String.class);
-        assertThat(response.getStatusCode(), Matchers.is(NOT_FOUND));
+        return response;
     }
 
     private String signUp(String username, String password) {
