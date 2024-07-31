@@ -26,8 +26,8 @@ public class WorkLog {
     private int hoursWorked;
 
 
-    public WorkLog(UUID id, User user, LocalDate date, UUID taskId, int hoursWorked) {
-        this.id = id;
+    public WorkLog(User user, LocalDate date, UUID taskId, int hoursWorked) {
+        this.id = UUID.randomUUID();
         this.user = user;
         this.date = date;
         this.taskId = taskId;
@@ -63,7 +63,7 @@ public class WorkLog {
     }
 
     public WorkLog assignUser(User user) {
-        return new WorkLog(this.id, user, this.date, this.taskId, this.hoursWorked);
+        return new WorkLog(user, this.date, this.taskId, this.hoursWorked);
     }
 
     public void setHoursWorked(int hoursWorked) {

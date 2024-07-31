@@ -90,7 +90,7 @@ class RepositoryTest {
         String taskTitle = "Task";
         Task task = new Task(taskTitle, "CustomerCode");
 
-        WorkLog workLog = new WorkLog(UUID.randomUUID(), new User("baba"), LocalDate.now(), task.getId(), 8);
+        WorkLog workLog = new WorkLog(new User("baba"), LocalDate.now(), task.getId(), 8);
         workLogRepository.save(workLog);
 
         WorkLog workLogFromDb = workLogRepository.findById(workLog.getId()).get();
@@ -105,8 +105,8 @@ class RepositoryTest {
         LocalDate startDate = LocalDate.now().minusMonths(1);
         LocalDate endDate = LocalDate.now();
 
-        WorkLog workLog1 = new WorkLog(UUID.randomUUID(), user, startDate, UUID.randomUUID(), 8);
-        WorkLog workLog2 = new WorkLog(UUID.randomUUID(), user, endDate, UUID.randomUUID(), 8);
+        WorkLog workLog1 = new WorkLog(user, startDate, UUID.randomUUID(), 8);
+        WorkLog workLog2 = new WorkLog(user, endDate, UUID.randomUUID(), 8);
         workLogRepository.save(workLog1);
         workLogRepository.save(workLog2);
 
@@ -123,8 +123,8 @@ class RepositoryTest {
         LocalDate startDate = LocalDate.now().minusMonths(1).withDayOfMonth(1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-        WorkLog workLog1 = new WorkLog(UUID.randomUUID(), user1, startDate.plusDays(5), UUID.randomUUID(), 8);
-        WorkLog workLog2 = new WorkLog(UUID.randomUUID(), user1, startDate.plusDays(10), UUID.randomUUID(), 8);
+        WorkLog workLog1 = new WorkLog(user1, startDate.plusDays(5), UUID.randomUUID(), 8);
+        WorkLog workLog2 = new WorkLog(user1, startDate.plusDays(10), UUID.randomUUID(), 8);
         workLogRepository.save(workLog1);
         workLogRepository.save(workLog2);
 

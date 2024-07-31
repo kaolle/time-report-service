@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import pb.se.TimeReportService.domain.User;
 import pb.se.TimeReportService.domain.WorkLog;
 import pb.se.TimeReportService.exception.ForbiddenException;
+import pb.se.TimeReportService.exception.TaskNotFoundException;
 import pb.se.TimeReportService.exception.WorkLogNotFoundException;
 import pb.se.TimeReportService.port.persistence.WorkLogRepository;
 
@@ -23,18 +24,6 @@ public class WorkLogService {
         return workLogRepository.findById(id);
     }
 
-    private static void validateUserIsTheOwner(User user, UUID customerId) {
-        if (user.getCustomers().stream().noneMatch(c-> c.getId().equals(customerId))) {
-            throw new ForbiddenException();
-        }
-    }
-
-    private static void validateUserIsTheOwnerOfTask(User user, UUID taskId) {
-        if (user.getCustomers().stream().noneMatch(c-> c.getTasks().stream().anyMatch(t -> t.getId().equals(taskId)))) {
-            throw new ForbiddenException();
-        }
-    }
-
     public void deleteWorkLog(User user, UUID id) {
         WorkLog existingWorkLog = workLogRepository.findById(id).orElseThrow(WorkLogNotFoundException::new);
         validateUser(user, existingWorkLog);
@@ -45,20 +34,27 @@ public class WorkLogService {
         return workLogRepository.findByUserAndDateBetween(user, startDate.minusDays(1), endDate.plusDays(1));
     }
 
+    private static void validateUserIsTheOwnerOfTask(User user, UUID taskId) {
+        if (user.getCustomers().stream().noneMatch(c-> c.getTasks().stream().anyMatch(t -> t.getId().equals(taskId)))) {
+            throw new TaskNotFoundException();
+        }
+    }
+
     private static void validateUser(User user, WorkLog existingWorkLog) {
-        if (!existingWorkLog.getUser().equals(user)) {
+        if (!existingWorkLog.getUser().getUsername().equals(user.getUsername())) {
             throw new ForbiddenException();
         }
     }
 
     public WorkLog createWorkLog(User user, WorkLog workLog) {
-        //TODO
+        validateUserIsTheOwnerOfTask(user, workLog.getTaskId());
         return workLogRepository.save(workLog.assignUser(user));
     }
 
     public void updateWorkLog(User user, UUID id, WorkLog updatedWorkLog) {
         WorkLog existingWorkLog = workLogRepository.findById(id).orElseThrow(WorkLogNotFoundException::new);
         validateUser(user, existingWorkLog);
+        validateUserIsTheOwnerOfTask(user, updatedWorkLog.getTaskId());
         existingWorkLog.setDate(updatedWorkLog.getDate());
         existingWorkLog.setTaskId(updatedWorkLog.getTaskId());
         existingWorkLog.setHoursWorked(updatedWorkLog.getHoursWorked());
